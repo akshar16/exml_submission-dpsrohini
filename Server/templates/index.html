@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ExML</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+        <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+        <meta name="description" content="Platform for ExML 2024">
+
+    </head>
+
+    <body>
+        <div class="header">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo">
+        </div>
+        <div class="gameover" id="gameover">
+            <i class="fas fa-times close-icon" id="close-icon"></i>
+            <div class="over-header">
+                <h1>
+                    Game Over
+                    <span>
+                        The game has ended.
+                    </span>
+                </h1>
+
+
+            </div>
+            <div class="ScoreBoard">
+                <div class="Winner row ">
+                    <span>
+                        Winner
+                    </span>
+                    <span id="winner" class="blue">
+                        No winner
+                    </span>
+                </div>
+                <div class="Score row ">
+                    <span >
+                        Player Score
+                    </span>
+                    <span id="score" class="blue">
+                        0
+                    </span>
+                </div>
+            </div>
+            <div class="timestamps">
+                <h1>
+                    Timestamps
+                </h1>
+                <div class="player row">
+                    <span>
+                        Player
+                    </span>
+                    <span id="player-timestamp" class="blue">
+                        0
+                    </span>
+                </div>
+                <div class="ghost row">
+                    <span>
+                        Ghost
+                    </span>
+                    <span id="ghost-timestamp" class="blue">
+                        0
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="gamearea" id="gamearea">
+            <div class="gameboard" id="gameboard">
+                <canvas id="background" class="canvas-layer" style="z-index: 1;"></canvas>
+                <canvas id="walls" class="canvas-layer" style="z-index: 0;"></canvas>
+                <canvas id="foreground" class="canvas-layer" style="z-index: 2;"></canvas>
+            </div>
+            <div class="gamestatus" id="gamestatus">
+                <div class="points">
+                    <h1 class="title">Player Points</h1>
+                    <div id="player-points"></div>
+
+                </div>
+                <div class="contian">
+                    <div class="participants">
+                        <div class="sub-header collapsible" id="part-coll">
+                            <h1 class="sub-title">Participants</h1>
+                            <img src="{{ url_for('static', filename='images/dropdown.png') }}" class="dropdown">
+                        </div>
+
+                        <div class="info coll-content" id="part-content">
+                            <div class="player name" style="margin-top: 1rem;">
+                                <span style="color: #4BB543AB; display: flex; align-items: center; gap: 8px;">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M2.76187 14.7987C2.52806 14.6641 2.33428 14.4696 2.2004 14.2354C2.06651 14.0011 1.99735 13.7354 2 13.4656V2.53438C1.99735 2.26456 2.06651 1.9989 2.2004 1.76464C2.33428 1.53037 2.52806 1.33593 2.76187 1.20125C2.9868 1.06984 3.24262 1.00058 3.50312 1.00058C3.76363 1.00058 4.01945 1.06984 4.24437 1.20125L13.7362 6.66563C13.9688 6.80221 14.1616 6.99719 14.2956 7.23125C14.4296 7.4653 14.5 7.73031 14.5 8C14.5 8.26969 14.4296 8.5347 14.2956 8.76875C14.1616 9.00281 13.9688 9.19779 13.7362 9.33438L4.24437 14.8C4.01933 14.9312 3.76346 15.0003 3.50295 15C3.24245 14.9998 2.98669 14.9304 2.76187 14.7987Z" fill="#4BB543" fill-opacity="0.67"/>
+                                    </svg>
+                                    Player
+                                </span>
+                                <span id="player-token" class="namevar">
+                                    waiting for connection...
+                                </span>
+                            </div>
+                            <div class="ghost name">
+                                <span style="color: #D3473AAB; display: flex; align-items: center; gap: 8px;">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M2.76187 14.7987C2.52806 14.6641 2.33428 14.4696 2.2004 14.2354C2.06651 14.0011 1.99735 13.7354 2 13.4656V2.53438C1.99735 2.26456 2.06651 1.9989 2.2004 1.76464C2.33428 1.53037 2.52806 1.33593 2.76187 1.20125C2.9868 1.06984 3.24262 1.00058 3.50312 1.00058C3.76363 1.00058 4.01945 1.06984 4.24437 1.20125L13.7362 6.66563C13.9688 6.80221 14.1616 6.99719 14.2956 7.23125C14.4296 7.4653 14.5 7.73031 14.5 8C14.5 8.26969 14.4296 8.5347 14.2956 8.76875C14.1616 9.00281 13.9688 9.19779 13.7362 9.33438L4.24437 14.8C4.01933 14.9312 3.76346 15.0003 3.50295 15C3.24245 14.9998 2.98669 14.9304 2.76187 14.7987Z" fill="#D3473AAB" fill-opacity="0.67"/>
+                                    </svg> Ghost
+                                </span>
+                                <span id="ghost-token" class="namevar">
+                                    waiting for connection...
+                                </span>
+                            </div>
+                            <div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="Moves">
+                        <div class="sub-header collapsible" id="moves-coll">
+                            <h1 class="sub-title">Move Status</h1>
+                            <img src="{{ url_for('static', filename='images/dropdown.png') }}" class="dropdown">
+                        </div>
+
+                        <div class="info coll-content" id="moves-content">
+                            <div class="player name" style="margin-top: 1rem;">
+                                <span style="color: #4BB543AB; display: flex; align-items: center; gap: 8px;">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M2.76187 14.7987C2.52806 14.6641 2.33428 14.4696 2.2004 14.2354C2.06651 14.0011 1.99735 13.7354 2 13.4656V2.53438C1.99735 2.26456 2.06651 1.9989 2.2004 1.76464C2.33428 1.53037 2.52806 1.33593 2.76187 1.20125C2.9868 1.06984 3.24262 1.00058 3.50312 1.00058C3.76363 1.00058 4.01945 1.06984 4.24437 1.20125L13.7362 6.66563C13.9688 6.80221 14.1616 6.99719 14.2956 7.23125C14.4296 7.4653 14.5 7.73031 14.5 8C14.5 8.26969 14.4296 8.5347 14.2956 8.76875C14.1616 9.00281 13.9688 9.19779 13.7362 9.33438L4.24437 14.8C4.01933 14.9312 3.76346 15.0003 3.50295 15C3.24245 14.9998 2.98669 14.9304 2.76187 14.7987Z" fill="#4BB543" fill-opacity="0.67"/>
+                                    </svg>
+                                    Player
+                                </span>
+                                <span id="player-dock" class="namevar">
+                                    No move docked
+                                </span>
+                            </div>
+                            <div class="ghost name">
+                                <span style="color: #D3473AAB; display: flex; align-items: center; gap: 8px;">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M2.76187 14.7987C2.52806 14.6641 2.33428 14.4696 2.2004 14.2354C2.06651 14.0011 1.99735 13.7354 2 13.4656V2.53438C1.99735 2.26456 2.06651 1.9989 2.2004 1.76464C2.33428 1.53037 2.52806 1.33593 2.76187 1.20125C2.9868 1.06984 3.24262 1.00058 3.50312 1.00058C3.76363 1.00058 4.01945 1.06984 4.24437 1.20125L13.7362 6.66563C13.9688 6.80221 14.1616 6.99719 14.2956 7.23125C14.4296 7.4653 14.5 7.73031 14.5 8C14.5 8.26969 14.4296 8.5347 14.2956 8.76875C14.1616 9.00281 13.9688 9.19779 13.7362 9.33438L4.24437 14.8C4.01933 14.9312 3.76346 15.0003 3.50295 15C3.24245 14.9998 2.98669 14.9304 2.76187 14.7987Z" fill="#D3473AAB" fill-opacity="0.67"/>
+                                    </svg> Ghost
+                                </span>
+                                <span id="ghost-dock" class="namevar">
+                                    No move docked
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="Queue">
+                        <h1 class="sub-title">
+                            Queue Status
+                        </h1>
+                        <span id="queue-status">
+                            You are not in Queue
+                        </span>
+                    </div>
+                </div>
+
+                <div class="controls" id="controls">
+                    <div class="btnrow" id="commands">
+                        <button id="reset" style="background-color: #2977F5; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: background-color 0.3s;">Reset Board</button>
+                        <button id="end" style="margin-top: 10px; background-color: #2977F5; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: background-color 0.3s;">End Game</button>
+                    </div>
+                    <!--
+                    <div class="btnrow" class="input">
+                        <input type="text" id="token-input" placeholder="Enter Token" class="inp">
+                        <button class="token btn cool-button" id="enter-queue">Enter Queue</button>
+                    </div>
+                    
+                    <div class="btnrow" class="input">
+                        <input type="email" id="email-input" placeholder="Enter Your Email" class="inp">
+                        <button class="token btn cool-button" id="get-token">
+                            Get Token
+                        </button>
+                    </div> 
+                    -->
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="token-input" placeholder="Enter Token" style="width: 100%; max-width: 300px; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem;">
+                            <button id="enter-queue" style="background-color: #2977F5; color: white; border: none; padding: 0.75rem 1.25rem; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: background-color 0.3s; white-space: nowrap;">Enter Queue</button>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="email" id="email-input" placeholder="Enter Your Email" style="width: 100%; max-width: 300px; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem;">
+                            <button id="get-token" style="background-color: #2977F5; color: white; border: none; padding: 0.75rem 1.25rem; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: background-color 0.3s; white-space: nowrap;">Get Token</button>
+                        </div>
+                    </div>
+                    
+                    
+                    
+                </div>
+            </div>
+        </div>
+        <script src="{{ url_for('static', filename='index.js') }}"></script>
+    </body>
+</html>
